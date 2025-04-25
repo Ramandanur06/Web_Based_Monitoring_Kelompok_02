@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Monitoring Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f3f3f3; padding: 20px; }
+    h2 { margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; background: white; margin-bottom: 40px; }
+    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+    canvas { max-width: 500px; margin-top: 10px; margin-bottom: 30px; }
+  </style>
+</head>
+<body>
+  <h2>Status Perangkat</h2>
+  <a href="/export" style="margin-bottom: 10px; display: inline-block; margin-right: 20px;">⬇ Download CSV</a>
+  <a href="/export-pdf" style="margin-bottom: 10px; display: inline-block;">⬇ Download PDF</a>
+  <div id="table-container"></div>
+
+  <script>
+    function fetchData() {
+      fetch('/data')
+        .then(res => res.json())
+        .then(devices => {
+          let html = `<table><tr>
+            <th>ID</th><th>IP</th><th>Hostname</th>
+            <th>Status</th><th>CPU</th><th>RAM</th><th>Waktu Update</th>
+          </tr>`;
+
+          for (const id in devices) {
+            const d = devices[id];
+            const statusColor = d.status === 'online' ? 'green' : 'red';
+            html += `<tr>
+              <td><a herf="/histori/${id}">${id}</td><td>${d.ip}</td><td>${d.hostname}</td>
+              <td style="color:${statusColor}">${d.status}</td>
+              <td>${d.cpu}</td><td>${d.ram}</td><td>${d.timestamp}</td>
+            </tr>`;
+          }
+
+          html += `</table>`;
+
+          for (const id in devices) {
+            html += `<h4>Grafik ${id}</h4><canvas id="chart-${id}"></canvas>`;
+          }
+
+          document.getElementById("table-container").innerHTML = html;
+
+          for (const id in devices) {
+            const d = devices[id];
+            const ctx = document.getElementById(`chart-${id}`).getContext("2d");
+            const cpuVal = parseFloat(d.cpu.replace('%',''));
+            const ramVal = parseFloat(d.ram.replace('%',''));
+
+            new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels: ['CPU', 'RAM'],
+                datasets: [{
+                  label: `Penggunaan ${id}`,
+                  data: [cpuVal, ramVal],
+                  backgroundColor: ['#4caf50', '#2196f3']
+                }]
+              },
+              options: {
+                responsive: true,
+                plugins: {
+                  legend: { display: false }
+                },
+                scales: {
+                  y: { beginAtZero: true, max: 100 }
+                }
+              }
+            });
+          }
+        });
+    }
+
+    fetchData();
+    setInterval(fetchData, 5000);
+  </script>
+</body>
+</html>
