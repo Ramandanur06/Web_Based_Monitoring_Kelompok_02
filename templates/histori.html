@@ -1,50 +1,102 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Histori - {{ client_id }}</title>
+  <meta charset="UTF-8">
+  <title>Histori Monitoring - {{ client_id }}</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
-    canvas { max-width: 800px; margin-top: 30px; }
-    a { text-decoration: none; color: blue; }
+    body {
+      font-family: sans-serif;
+      margin: 30px;
+      background: #f2f2f2;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    canvas {
+      margin: 20px 0;
+    }
+    a {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: #007bff;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
-  <h2>Histori Monitoring: {{ client_id }}</h2>
-  <a href="/">⬅ Kembali ke dashboard</a>
-  <canvas id="historiChart"></canvas>
+  <div class="container">
+    <h2>Histori Monitoring - {{ client_id }}</h2>
+
+    <div class="form-group">
+      <form method="get">
+        <label for="date">Pilih Tanggal:</label>
+        <input type="date" name="date" value="{{ selected_date }}">
+        <button type="submit">Tampilkan</button>
+      </form>
+    </div>
+
+    <canvas id="cpuChart" height="120"></canvas>
+    <canvas id="ramChart" height="120"></canvas>
+
+    <a href="/">← Kembali ke Dashboard</a>
+  </div>
 
   <script>
-    const timestamps = {{ timestamps | tojson }};
-    const cpu = {{ cpu | tojson }};
-    const ram = {{ ram | tojson }};
+    const labels = {{ timestamps | tojson }};
+    const cpuData = {{ cpu | tojson }};
+    const ramData = {{ ram | tojson }};
 
-    const ctx = document.getElementById('historiChart').getContext('2d');
-    const chart = new Chart(ctx, {
+    const cpuChart = new Chart(document.getElementById('cpuChart'), {
       type: 'line',
       data: {
-        labels: timestamps,
-        datasets: [
-          {
-            label: 'CPU (%)',
-            data: cpu,
-            borderColor: '#4caf50',
-            fill: false
-          },
-          {
-            label: 'RAM (%)',
-            data: ram,
-            borderColor: '#2196f3',
-            fill: false
-          }
-        ]
+        labels: labels,
+        datasets: [{
+          label: 'CPU Usage (%)',
+          data: cpuData,
+          borderColor: 'rgba(255, 99, 132, 1)',
+          fill: false,
+          tension: 0.3
+        }]
       },
       options: {
         responsive: true,
-        plugins: {
-          legend: { position: 'top' },
-          title: { display: true, text: 'Riwayat CPU & RAM' }
-        },
+        scales: {
+          y: { beginAtZero: true, max: 100 }
+        }
+      }
+    });
+
+    const ramChart = new Chart(document.getElementById('ramChart'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'RAM Usage (%)',
+          data: ramData,
+          borderColor: 'rgba(54, 162, 235, 1)',
+          fill: false,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
         scales: {
           y: { beginAtZero: true, max: 100 }
         }
